@@ -2,12 +2,13 @@
 FROM maven:3.8.5-openjdk-17 AS build
 WORKDIR /app
 COPY . .
-RUN mvn clean package -DskipTests
+# Compila o projeto e logo em seguida apaga o plain.jar para evitar conflito
+RUN mvn clean package -DskipTests && rm -f target/*-plain.jar
 
 # Estagio 2: O Render cria um ambiente Java limpo e super leve (Eclipse Temurin)
 FROM eclipse-temurin:17-jdk-jammy
 WORKDIR /app
-# Pega o arquivo compilado no estagio 1
+# Agora o asterisco so vai encontrar o JAR correto (o Fat JAR)
 COPY --from=build /app/target/*.jar app.jar
 # Permite que o Spring Boot use a porta que o Render definir na nuvem
 ENTRYPOINT ["java", "-Dserver.port=${PORT:-8080}", "-jar", "app.jar"]
