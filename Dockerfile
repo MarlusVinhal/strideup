@@ -1,11 +1,11 @@
-# Estagio 1: O Render vai baixar o Maven e compilar o seu código
+# Estagio 1: O Render vai baixar o Maven e compilar o seu codigo
 FROM maven:3.8.5-openjdk-17 AS build
 WORKDIR /app
 COPY . .
 RUN mvn clean package -DskipTests
 
-# Estagio 2: O Render cria um ambiente Java limpo e super leve apenas para rodar a aplicação
-FROM openjdk:17-jdk-slim
+# Estagio 2: O Render cria um ambiente Java limpo e super leve (Eclipse Temurin)
+FROM eclipse-temurin:17-jdk-jammy
 WORKDIR /app
 # Pega o arquivo compilado no estagio 1
 COPY --from=build /app/target/*.jar app.jar
