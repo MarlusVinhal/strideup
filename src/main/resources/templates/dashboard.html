@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StrideUp - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --bg-image: url('/img/fundo-run1.png'); }
+        [data-theme="dark"] { --overlay-color: rgba(15, 16, 21, 0.85); --sidebar-bg: rgba(22, 24, 29, 0.6); --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08); --neon-color: #00ffaa; --neon-glow: 0 0 8px rgba(0, 255, 170, 0.4); --text-main: #ffffff; --text-muted: #a0aab5; }
+        [data-theme="light"] { --overlay-color: rgba(0, 0, 0, 0.15); --sidebar-bg: rgba(255, 255, 255, 0.15); --glass-bg: rgba(255, 255, 255, 0.15); --glass-border: rgba(255, 255, 255, 0.35); --neon-color: #00ffaa; --neon-glow: 0 0 12px rgba(0, 255, 170, 0.6); --text-main: #ffffff; --text-muted: #e2e8f0; }
+
+        body { background-image: var(--bg-image); background-size: cover; background-position: center; background-attachment: fixed; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow-x: hidden; color: var(--text-main); transition: color 0.3s ease; }
+        .wrapper { display: flex; width: 100%; min-height: 100vh; background-color: var(--overlay-color); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: background-color 0.4s ease; }
+        .text-neon { color: var(--neon-color) !important; text-shadow: var(--neon-glow); }
+        .bg-glass { background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--glass-border); transition: background 0.4s ease, border-color 0.4s ease; }
+
+        .sidebar { width: 260px; background: var(--sidebar-bg); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; backdrop-filter: blur(10px); transition: background 0.4s ease, border-color 0.4s ease; }
+        .nav-link-custom { color: var(--text-muted); padding: 12px 20px; margin: 4px 15px; border-radius: 8px; transition: all 0.3s ease; text-decoration: none; display: flex; align-items: center; font-weight: 500; }
+        .nav-link-custom:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.1); }
+        .nav-link-custom.active { color: #000000 !important; background: linear-gradient(90deg, #00ffaa 0%, #00cc88 100%); box-shadow: 0 4px 15px rgba(0, 255, 170, 0.3); }
+
+        .content { flex: 1; padding: 2rem; }
+        .stat-box { border-radius: 12px; background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 15px; text-align: center; transition: background 0.4s ease, border-color 0.4s ease;}
+        .theme-toggle-wrapper { cursor: pointer; border: 1px solid var(--glass-border); transition: all 0.2s ease; }
+        .theme-toggle-wrapper:hover { background: rgba(255, 255, 255, 0.15); border-color: var(--neon-color); }
+
+        .radar-card { background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); padding: 1.5rem; border-radius: 1rem; margin-bottom: 1rem; transition: transform 0.2s; }
+        .radar-card:hover { border-color: var(--neon-color); transform: translateX(5px); }
+        .knowledge-capsule { background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(0, 255, 170, 0.08) 100%); border-radius: 1.2rem; }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <nav class="sidebar py-4 shadow-lg">
+        <div class="text-center mb-5 px-3">
+            <h2 class="fw-bold text-neon mb-0"><i class="fas fa-running me-2"></i>StrideUp</h2>
+        </div>
+        <div class="flex-grow-1">
+            <a href="/dashboard" class="nav-link-custom active"><i class="fas fa-home me-3 fs-5"></i> Visão Geral</a>
+            <a href="/desafios" class="nav-link-custom"><i class="fas fa-bullseye me-3 fs-5"></i> Desafios</a>
+            <a href="/treinos" class="nav-link-custom"><i class="fas fa-shoe-prints me-3 fs-5"></i> Meus Treinos</a>
+            <a href="/ranking" class="nav-link-custom"><i class="fas fa-trophy me-3 fs-5"></i> Ranking</a>
+            <a href="/recompensas" class="nav-link-custom"><i class="fas fa-gift me-3 fs-5"></i> Recompensas</a>
+            <div th:if="${#authentication.name == 'admin@strideup.com'}" class="mt-4">
+                <p class="text-white-50 small mb-2 px-4 text-uppercase fw-bold" style="letter-spacing: 1px;">Área Admin</p>
+                <a href="/admin/parcerias/nova" class="nav-link-custom" style="color: var(--neon-color);"><i class="fas fa-handshake me-3 fs-5"></i> Cadastrar Parceria</a>
+                <a href="/admin/recompensas/nova" class="nav-link-custom" style="color: var(--neon-color);"><i class="fas fa-plus-circle me-3 fs-5"></i> Cadastrar Recompensa</a>
+                <a href="/admin/desafios/novo" class="nav-link-custom" style="color: var(--neon-color);"><i class="fas fa-bullseye me-3 fs-5"></i> Cadastrar Desafio</a>
+            </div>
+        </div>
+        <div class="mt-auto px-3">
+            <div class="theme-toggle-wrapper d-flex align-items-center justify-content-center p-2 rounded-3 mb-3 bg-glass" onclick="toggleTheme()" title="Mudar Tema">
+                <span class="text-white fs-4" id="themeIconBtn"><i class="fas fa-moon"></i></span>
+            </div>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="btn btn-outline-danger w-100" style="border-radius: 8px;"><i class="fas fa-sign-out-alt me-2"></i> Sair da Conta</button>
+            </form>
+        </div>
+    </nav>
+
+    <main class="content">
+        <div th:if="${param.sucesso_treino}" class="alert alert-success fw-bold border-0 shadow-sm mb-4 bg-glass" style="color: var(--neon-color);"><i class="fas fa-check-circle me-2"></i> Treino registado!</div>
+        <div th:if="${param.sucesso}" class="alert alert-success fw-bold border-0 shadow-sm mb-4 bg-glass" style="color: var(--neon-color);"><i class="fas fa-check-circle me-2"></i> Strava sincronizado com sucesso!</div>
+
+        <div th:with="temDados=${stravaConectado or totalAtividades > 0}">
+            <div th:if="${!temDados}" class="card bg-glass text-center p-5 mx-auto mt-5 shadow-lg" style="max-width: 700px;">
+                <i class="fas fa-lock fa-4x mb-4 text-white-50"></i>
+                <h2 class="fw-bold text-white mb-3">Desbloqueie o seu Dashboard</h2>
+                <p class="text-white-50 mb-5 fs-5">Para obter o seu Status de Patente, Saldo e Estatísticas, o sistema exige dados reais de atividade. Escolha uma opção para começar:</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="/strava/conectar" class="btn text-white fw-bold px-4 py-2 shadow" style="background-color: #fc4c02; border-radius: 8px;"><i class="fab fa-strava me-2"></i> Conectar Strava</a>
+                    <button class="btn text-dark fw-bold px-4 py-2 shadow" data-bs-toggle="modal" data-bs-target="#modalTreinoManual" style="background-color: #00ffaa; border-radius: 8px;"><i class="fas fa-plus-circle me-2"></i> Inserir Primeiro Treino</button>
+                </div>
+            </div>
+
+            <div th:if="${temDados}">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <p class="text-white-50 mb-1">Painel de Controle</p>
+                        <h2 class="fw-bold text-white mb-0">Bem-vindo(a), <span class="text-neon" th:text="${nomeUsuario}">Atleta</span>!</h2>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a th:if="${!stravaConectado}" href="/strava/conectar" class="btn btn-sm text-white fw-bold px-3 py-2 shadow d-flex align-items-center" style="background-color: #fc4c02; border-radius: 8px; text-decoration: none;"><i class="fab fa-strava me-2" style="font-size: 1.1rem;"></i> Conectar Strava</a>
+                        <a th:if="${stravaConectado}" href="/dashboard" class="btn btn-sm text-white fw-bold px-3 py-2 shadow d-flex align-items-center bg-glass" style="border: 1px solid rgba(252, 76, 2, 0.6); border-radius: 8px; text-decoration: none;" title="Clique para buscar novos treinos"><i class="fab fa-strava me-2" style="color: #fc4c02; font-size: 1.1rem;"></i><span class="me-2 text-white">Strava Conectado</span><i class="fas fa-check-circle text-neon"></i></a>
+                        <button class="btn btn-sm text-dark fw-bold px-3 py-2 shadow d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalTreinoManual" style="background-color: #00ffaa; border-radius: 8px;"><i class="fas fa-plus-circle me-2"></i> Registrar Treino Manual</button>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-5">
+                    <div class="col-md-3">
+                        <div class="bg-glass px-4 py-3 shadow h-100" style="border-radius: 12px;">
+                            <p class="text-white-50 small text-uppercase fw-bold mb-1">Patente Atual</p>
+                            <h4 class="fw-bold text-neon mb-0"><i class="fas fa-medal me-2"></i><span th:text="${patenteAtleta}">Iniciante</span></h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="bg-glass px-4 py-3 shadow h-100" style="border-radius: 12px;">
+                            <p class="text-white-50 small text-uppercase fw-bold mb-1">Saldo Total</p>
+                            <h4 class="fw-bold text-warning mb-0"><i class="fas fa-coins me-2"></i><span th:text="${stridePointsTotais} + ' SP'">0 SP</span></h4>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="bg-glass px-4 py-3 shadow h-100 d-flex flex-column justify-content-center" style="border-radius: 12px;">
+                            <div class="d-flex justify-content-between mb-2 align-items-center">
+                                <span class="text-white-50 small text-uppercase fw-bold">Meta: <span th:text="${metaAtual}">50</span> km/mês</span>
+                                <span class="text-neon fw-bold fs-5" th:text="${#numbers.formatDecimal(progressoMeta, 1, 1)} + '%'">0%</span>
+                            </div>
+                            <div class="progress mb-2 bg-dark" style="height: 10px; border-radius: 10px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" th:style="'width: ' + ${progressoMeta} + '%; background-color: #00ffaa;'"></div>
+                            </div>
+                            <button class="btn btn-link text-white-50 p-0 text-start small text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalMeta"><i class="fas fa-pencil-alt me-1"></i> Alterar Objetivo</button>
+                        </div>
+                    </div>
+                </div>
+
+                <h4 class="fw-bold text-white mb-3"><i class="fas fa-chart-pie text-neon me-2"></i> Minhas Estatísticas</h4>
+                <div class="row g-3 mb-5">
+                    <div class="col-4"><div class="stat-box"><h3 class="fw-bold text-white mb-0" th:text="${#numbers.formatDecimal(distanciaTotal, 1, 1)} + ' km'">0</h3><p class="text-white-50 small mb-0 text-uppercase">Distância Total</p></div></div>
+                    <div class="col-4"><div class="stat-box"><h3 class="fw-bold text-white mb-0" th:text="${#numbers.formatDecimal(tempoTotal / 60.0, 1, 1)} + ' h'">0</h3><p class="text-white-50 small mb-0 text-uppercase">Horas Corridas</p></div></div>
+                    <div class="col-4"><div class="stat-box"><h3 class="fw-bold text-white mb-0" th:text="${totalAtividades}">0</h3><p class="text-white-50 small mb-0 text-uppercase">Atividades</p></div></div>
+                </div>
+
+                <!-- ========================================================= -->
+                <!-- NOVA ÁREA CRIATIVA DO DASHBOARD                           -->
+                <!-- ========================================================= -->
+                <div class="row g-4 mb-5">
+                    <!-- RADAR DE DESAFIOS -->
+                    <div class="col-lg-8">
+                        <h4 class="fw-bold text-white mb-3"><i class="fas fa-satellite-dish text-neon me-2"></i> Radar de Missões</h4>
+                        <div class="bg-glass p-4 h-100 shadow-sm" style="border-radius: 1.2rem;">
+
+                            <!-- Fallback caso não haja missões no radar -->
+                            <div th:if="${#lists.isEmpty(radarDesafios)}" class="text-center py-4">
+                                <i class="fas fa-check-double fa-3x text-white-50 mb-3"></i>
+                                <h5 class="text-white">Sem missões pendentes!</h5>
+                                <p class="text-white-50 small mb-0">Você já completou os desafios ativos da semana. Ótimo trabalho!</p>
+                                <a href="/desafios" class="btn btn-sm btn-outline-success mt-3 rounded-pill px-4">Ver Todos</a>
+                            </div>
+
+                            <!-- Cartões do Radar dinâmico -->
+                            <div th:each="radar : ${radarDesafios}" class="radar-card">
+                                <div class="d-flex justify-content-between align-items-end mb-2">
+                                    <div>
+                                        <h6 class="fw-bold text-white mb-0" th:text="${radar.titulo}">Desafio</h6>
+                                        <span class="text-white-50 small fst-italic" th:text="${radar.mensagem}">Motivação</span>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge text-dark fw-bold fs-6 shadow-sm" style="background-color: var(--neon-color);" th:text="'Faltam ' + ${#numbers.formatDecimal(radar.falta, 1, 1)} + ' ' + ${radar.unidade}"></span>
+                                    </div>
+                                </div>
+                                <div class="progress bg-dark mt-3 border border-secondary" style="height: 12px; border-radius: 12px;">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" th:style="'width: ' + ${radar.percentual} + '%; background-color: var(--neon-color);'"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CÁPSULA DE CONHECIMENTO -->
+                    <div class="col-lg-4">
+                        <h4 class="fw-bold text-white mb-3"><i class="fas fa-lightbulb text-warning me-2"></i> Você Sabia?</h4>
+                        <div class="bg-glass knowledge-capsule p-4 h-100 d-flex flex-column justify-content-center text-center border-secondary shadow-lg">
+                            <i class="fas fa-quote-left fa-2x text-white-50 mb-3 opacity-50"></i>
+                            <p class="text-white fs-6 fst-italic mb-4" th:text="${curiosidadeDoDia}">Curiosidade...</p>
+                            <div class="mt-auto">
+                                <span class="badge bg-dark border border-secondary text-white-50 px-3 py-2 rounded-pill shadow-sm"><i class="fas fa-info-circle me-1"></i> Dica StrideUp</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ======================================================= -->
+<!-- MODAL: REGISTO MANUAL DE TREINO                         -->
+<!-- ======================================================= -->
+<div class="modal fade" id="modalTreinoManual" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-glass shadow-lg" style="border-radius: 1.5rem;">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title fw-bold text-white"><i class="fas fa-map-marker-alt text-neon me-2"></i>Novo Treino Manual</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/treinos/manual" method="post">
+                <div class="modal-body p-4">
+
+                    <!-- Localização -->
+                    <div class="mb-3 position-relative">
+                        <label class="form-label text-white-50 small fw-bold text-uppercase ms-1">Local do Treino (Obrigatório)</label>
+                        <div class="input-group shadow-sm">
+                            <button type="button" class="btn text-dark fw-bold" onclick="usarGPS()" style="background-color: #00ffaa; border-color: #00ffaa;" title="Usar minha localização atual"><i class="fas fa-crosshairs"></i></button>
+                            <input type="text" id="inputBuscaLocal" name="localizacao" class="form-control bg-dark text-white py-2" placeholder="Digite ou use o GPS..." required>
+                            <button type="button" class="btn btn-outline-secondary text-white bg-dark" onclick="buscarNoMapa()">Buscar</button>
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="hiddenLatitude" name="latitude">
+                    <input type="hidden" id="hiddenLongitude" name="longitude">
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small fw-bold text-uppercase ms-1">Desporto</label>
+                            <select name="desporto" class="form-select bg-dark text-white py-2" style="border-color: rgba(255,255,255,0.1);" required>
+                                <option value="Corrida">Corrida</option>
+                                <option value="Caminhada">Caminhada</option>
+                                <option value="Cadeira de Rodas">Cadeira de Rodas</option>
+                                <option value="Corrida Virtual">Corrida Virtual</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small fw-bold text-uppercase ms-1">Data e Hora</label>
+                            <input type="datetime-local" name="dataHora" class="form-control bg-dark text-white py-2" style="border-color: rgba(255,255,255,0.1);" required>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small fw-bold text-uppercase ms-1">Distância (km)</label>
+                            <input type="number" step="0.01" name="distancia" class="form-control bg-dark text-white py-2" placeholder="Ex: 5.5" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small fw-bold text-uppercase ms-1">Duração (minutos)</label>
+                            <input type="number" name="tempo" class="form-control bg-dark text-white py-2" placeholder="Ex: 40" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label text-white-50 small fw-bold text-uppercase ms-1">Descrição</label>
+                        <textarea name="descricao" class="form-control bg-dark text-white" rows="2" style="border-radius: 1rem; border-color: rgba(255,255,255,0.1);" placeholder="Como se sentiu neste treino?"></textarea>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer border-secondary justify-content-end">
+                    <button type="button" class="btn text-white-50" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn text-dark fw-bold px-4 shadow" style="background-color: #00ffaa; border-radius: 8px;"><i class="fas fa-save me-2"></i> Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalMeta" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content bg-glass" style="border-radius: 1.5rem;">
+            <div class="modal-header border-secondary"><h6 class="modal-title fw-bold text-white">Definir Meta Mensal</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form action="/dashboard/meta" method="post">
+                <div class="modal-body p-4 text-center">
+                    <label class="form-label text-white-50 small">Quantos Km quer correr este mês?</label>
+                    <input type="number" step="1" name="novaMeta" class="form-control bg-dark text-white text-center fs-4 fw-bold" th:value="${metaAtual}" required>
+                </div>
+                <div class="modal-footer border-secondary justify-content-center">
+                    <button type="submit" class="btn text-dark fw-bold w-100" style="background-color: #00ffaa;">Atualizar Meta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    function toggleTheme() {
+        const html = document.documentElement;
+        const newTheme = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('strideup-theme', newTheme);
+        document.getElementById('themeIconBtn').innerHTML = newTheme === 'light' ? '<i class="fas fa-sun" style="color: #f39c12;"></i>' : '<i class="fas fa-moon"></i>';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedTheme = localStorage.getItem('strideup-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.getElementById('themeIconBtn').innerHTML = savedTheme === 'light' ? '<i class="fas fa-sun" style="color: #f39c12;"></i>' : '<i class="fas fa-moon"></i>';
+    });
+
+    function usarGPS() {
+        var input = document.getElementById('inputBuscaLocal');
+        if ("geolocation" in navigator) {
+            input.value = "Acedendo ao satélite GPS...";
+            navigator.geolocation.getCurrentPosition(function(position) {
+                var lat = position.coords.latitude;
+                var lon = position.coords.longitude;
+                document.getElementById('hiddenLatitude').value = lat;
+                document.getElementById('hiddenLongitude').value = lon;
+                fetch(`https://photon.komoot.io/reverse?lon=${lon}&lat=${lat}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.features && data.features.length > 0) {
+                            var place = data.features[0].properties;
+                            input.value = place.city || place.town || place.state || "Localização Atual";
+                        } else { input.value = "Coordenadas capturadas"; }
+                    }).catch(() => { input.value = "Coordenadas capturadas"; });
+            }, function(error) { alert("Erro ao capturar GPS."); input.value = ""; });
+        } else { alert("Navegador não suporta Geolocalização."); }
+    }
+
+    function buscarNoMapa() {
+        var input = document.getElementById('inputBuscaLocal');
+        var query = input.value.trim();
+        if (query.length < 3) { alert("Digite o nome do local!"); return; }
+
+        var btnBuscar = document.querySelector('button[onclick="buscarNoMapa()"]');
+        var textoOriginal = btnBuscar.innerHTML;
+        btnBuscar.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        btnBuscar.disabled = true;
+
+        var urlApi = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query) + '&limit=1&countrycodes=br';
+
+        fetch(urlApi)
+            .then(response => { if (!response.ok) throw new Error("Erro"); return response.json(); })
+            .then(data => {
+                btnBuscar.disabled = false;
+                if (data.length > 0) {
+                    var place = data[0];
+                    input.value = place.display_name.split(',').slice(0, 2).join(',');
+                    document.getElementById('hiddenLatitude').value = place.lat;
+                    document.getElementById('hiddenLongitude').value = place.lon;
+
+                    btnBuscar.classList.replace('btn-outline-secondary', 'btn-success');
+                    btnBuscar.innerHTML = '<i class="fas fa-check"></i> Achou!';
+                    setTimeout(() => {
+                        btnBuscar.classList.replace('btn-success', 'btn-outline-secondary');
+                        btnBuscar.innerHTML = textoOriginal;
+                    }, 3000);
+                } else {
+                    btnBuscar.innerHTML = textoOriginal;
+                    alert("Não encontramos coordenadas para '" + query + "'.");
+                }
+            })
+            .catch(err => { btnBuscar.disabled = false; btnBuscar.innerHTML = textoOriginal; });
+    }
+</script>
+
+</body>
+</html>

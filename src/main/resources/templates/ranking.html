@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StrideUp - Ranking</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --bg-image: url('/img/fundo-run.jpg'); }
+
+        [data-theme="dark"] {
+            --overlay-color: rgba(15, 16, 21, 0.85);
+            --sidebar-bg: rgba(22, 24, 29, 0.6);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --neon-color: #00ffaa;
+            --neon-glow: 0 0 8px rgba(0, 255, 170, 0.4);
+            --text-main: #ffffff;
+            --text-muted: #a0aab5;
+        }
+
+        [data-theme="light"] {
+            --overlay-color: rgba(0, 0, 0, 0.15);
+            --sidebar-bg: rgba(255, 255, 255, 0.15);
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.35);
+            --neon-color: #00ffaa;
+            --neon-glow: 0 0 12px rgba(0, 255, 170, 0.6);
+            --text-main: #ffffff;
+            --text-muted: #e2e8f0;
+        }
+
+        body {
+            background-image: var(--bg-image); background-size: cover; background-position: center;
+            background-attachment: fixed; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden; color: var(--text-main); transition: color 0.3s ease;
+        }
+
+        .wrapper {
+            display: flex; width: 100%; min-height: 100vh;
+            background-color: var(--overlay-color); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            transition: background-color 0.4s ease;
+        }
+
+        .text-neon { color: var(--neon-color) !important; text-shadow: var(--neon-glow); }
+
+        .bg-glass {
+            background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border); transition: background 0.4s ease, border-color 0.4s ease;
+        }
+
+        .sidebar {
+            width: 260px; background: var(--sidebar-bg); border-right: 1px solid var(--glass-border);
+            display: flex; flex-direction: column; backdrop-filter: blur(10px);
+            transition: background 0.4s ease, border-color 0.4s ease;
+        }
+
+        .nav-link-custom { color: var(--text-muted); padding: 12px 20px; margin: 4px 15px; border-radius: 8px; transition: all 0.3s ease; text-decoration: none; display: flex; align-items: center; font-weight: 500; }
+        .nav-link-custom:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.1); }
+        .nav-link-custom.active { color: #000000 !important; background: linear-gradient(90deg, #00ffaa 0%, #00cc88 100%); box-shadow: 0 4px 15px rgba(0, 255, 170, 0.3); }
+
+        .content { flex: 1; padding: 2rem; }
+
+        /* Estilos da Tabela */
+        .ranking-table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+        .ranking-table th { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; padding: 0 20px 10px 20px; border-bottom: 1px solid var(--glass-border); }
+        .ranking-row { background: var(--glass-bg); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.4s; border-radius: 12px; }
+        .ranking-row td { padding: 15px 20px; vertical-align: middle; border-top: 1px solid transparent; border-bottom: 1px solid transparent; }
+        .ranking-row td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; border-left: 1px solid transparent; }
+        .ranking-row td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; border-right: 1px solid transparent; }
+        .ranking-row:hover { transform: translateY(-3px); background: rgba(255, 255, 255, 0.1); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+
+        .highlight-row td { border-color: rgba(0, 255, 170, 0.5) !important; background: rgba(0, 255, 170, 0.15); }
+
+        .medal-icon { font-size: 1.5rem; filter: drop-shadow(0 0 5px rgba(0,0,0,0.5)); }
+        .medal-gold { color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+        .medal-silver { color: #C0C0C0; text-shadow: 0 0 10px rgba(192, 192, 192, 0.5); }
+        .medal-bronze { color: #CD7F32; text-shadow: 0 0 10px rgba(205, 127, 50, 0.5); }
+        .pos-number { font-size: 1.2rem; font-weight: bold; color: var(--text-muted); width: 30px; display: inline-block; text-align: center; }
+
+        /* Estilos do Botão de Abas (Global vs Local) */
+        .tab-btn { color: var(--text-muted); font-weight: bold; padding: 10px 24px; border-radius: 50px; text-decoration: none; transition: all 0.3s ease; display: flex; align-items: center; }
+        .tab-btn:hover { color: var(--text-main); }
+        .tab-btn.active { background-color: var(--neon-color); color: #000 !important; box-shadow: 0 0 15px rgba(0, 255, 170, 0.4); }
+
+        .theme-toggle-wrapper { cursor: pointer; border: 1px solid var(--glass-border); transition: all 0.2s ease; }
+        .theme-toggle-wrapper:hover { background: rgba(255, 255, 255, 0.15); border-color: var(--neon-color); }
+
+        [data-theme="light"] .text-white { color: var(--text-main) !important; }
+        [data-theme="light"] .text-white-50 { color: var(--text-muted) !important; }
+        [data-theme="light"] .bg-dark { background-color: rgba(255, 255, 255, 0.6) !important; color: var(--text-main) !important; border-color: var(--glass-border) !important;}
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <!-- MENU LATERAL -->
+    <nav class="sidebar py-4 shadow-lg">
+        <div class="text-center mb-5 px-3">
+            <h2 class="fw-bold text-neon mb-0"><i class="fas fa-running me-2"></i>StrideUp</h2>
+        </div>
+        <div class="flex-grow-1">
+            <a href="/dashboard" class="nav-link-custom"><i class="fas fa-home me-3 fs-5"></i> Visão Geral</a>
+            <a href="/treinos" class="nav-link-custom"><i class="fas fa-shoe-prints me-3 fs-5"></i> Meus Treinos</a>
+            <a href="/desafios" class="nav-link-custom"><i class="fas fa-bullseye me-3 fs-5"></i> Desafios</a>
+            <a href="/ranking" class="nav-link-custom active"><i class="fas fa-trophy me-3 fs-5"></i> Ranking</a>
+            <a href="/recompensas" class="nav-link-custom"><i class="fas fa-gift me-3 fs-5"></i> Recompensas</a>
+            <div th:if="${#authentication.name == 'admin@strideup.com'}" class="mt-4">
+                <p class="text-white-50 small mb-2 px-4 text-uppercase fw-bold" style="letter-spacing: 1px;">Área Admin</p>
+                <a href="/admin/parcerias/nova" class="nav-link-custom" style="color: var(--neon-color);"><i class="fas fa-handshake me-3 fs-5"></i> Cadastrar Parceria</a>
+                <a href="/admin/recompensas/nova" class="nav-link-custom" style="color: var(--neon-color);"><i class="fas fa-plus-circle me-3 fs-5"></i> Cadastrar Recompensa</a>
+                <a href="/admin/desafios/novo" class="nav-link-custom" style="color: var(--neon-color);"><i class="fas fa-bullseye me-3 fs-5"></i> Cadastrar Desafio</a>
+            </div>
+        </div>/
+        <div class="mt-auto px-3">
+            <div class="theme-toggle-wrapper d-flex align-items-center justify-content-between p-2 rounded-3 mb-3 bg-glass" onclick="toggleTheme()">
+                <span class="text-white small fw-bold" id="themeLabel"><i class="fas fa-moon me-2"></i>Modo Escuro</span>
+                <div class="form-check form-switch m-0">
+                    <input class="form-check-input shadow-none" type="checkbox" id="themeSwitch" checked style="cursor: pointer;">
+                </div>
+            </div>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="btn btn-outline-danger w-100" style="border-radius: 8px;"><i class="fas fa-sign-out-alt me-2"></i> Sair da Conta</button>
+            </form>
+        </div>
+    </nav>
+
+    <!-- ÁREA CENTRAL -->
+    <main class="content">
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <p class="text-white-50 mb-1">Competição</p>
+                <h2 class="fw-bold text-white mb-0">Ranking de <span class="text-neon">Atletas</span></h2>
+            </div>
+            <div class="bg-glass px-4 py-2 text-center shadow" style="border-radius: 12px;">
+                <p class="text-white-50 small text-uppercase fw-bold mb-1" style="letter-spacing: 1px;">Patente</p>
+                <h4 class="fw-bold text-neon mb-0"><i class="fas fa-medal me-2"></i><span th:text="${patenteAtleta}">Iniciante</span></h4>
+            </div>
+        </div>
+
+        <!-- SELETOR DE RANKING (PÍLULA DE NAVEGAÇÃO) -->
+        <div class="d-flex justify-content-center mb-4">
+            <div class="bg-glass p-1 rounded-pill shadow-sm d-inline-flex border border-secondary">
+                <a href="/ranking?filtro=global" class="tab-btn" th:classappend="${filtroAtivo == 'global'} ? 'active' : ''">
+                    <i class="fas fa-globe-americas me-2"></i> Mundo
+                </a>
+                <a href="/ranking?filtro=local" class="tab-btn" th:classappend="${filtroAtivo == 'local'} ? 'active' : ''">
+                    <i class="fas fa-map-marker-alt me-2"></i> Local <span class="ms-1 fw-normal text-truncate" style="font-size: 0.8rem; max-width: 150px; opacity: 0.8;" th:text="'(' + ${localAtual} + ')'"></span>
+                </a>
+            </div>
+        </div>
+
+        <div class="bg-glass p-4 shadow-lg" style="border-radius: 1.5rem;">
+            <table class="ranking-table">
+                <thead>
+                <tr>
+                    <th style="width: 10%; text-align: center;">Posição</th>
+                    <th style="width: 40%;">Atleta</th>
+                    <th style="width: 25%; text-align: right;">Distância Total</th>
+                    <th style="width: 25%; text-align: right;">Saldo SP</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="atleta, stat : ${ranking}" class="ranking-row" th:classappend="${atleta.email == emailUsuarioLogado} ? 'highlight-row' : ''">
+                    <td class="text-center">
+                        <i th:if="${stat.index == 0}" class="fas fa-medal medal-icon medal-gold"></i>
+                        <i th:if="${stat.index == 1}" class="fas fa-medal medal-icon medal-silver"></i>
+                        <i th:if="${stat.index == 2}" class="fas fa-medal medal-icon medal-bronze"></i>
+                        <span th:if="${stat.index > 2}" class="pos-number" th:text="${stat.index + 1}">4</span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-dark rounded-circle d-flex align-items-center justify-content-center border border-secondary me-3 shadow-sm" style="width: 45px; height: 45px;">
+                                <i class="fas fa-user text-white-50 fs-5"></i>
+                            </div>
+                            <div>
+                                <span class="fw-bold fs-5 text-white d-block" th:text="${atleta.nome}">Nome</span>
+                                <span th:if="${atleta.email == emailUsuarioLogado}" class="badge text-dark mt-1" style="background-color: #00ffaa; font-size: 0.7rem;">Você</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-end align-middle">
+                        <span class="fw-bold text-white fs-5"><span th:text="${#numbers.formatDecimal(atleta.distanciaTotal, 1, 1)}">0,0</span> km</span>
+                    </td>
+                    <td class="text-end align-middle">
+                        <span class="fw-bold text-warning fs-5"><span th:text="${atleta.stridePoints}">0</span> SP</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <div th:if="${#lists.isEmpty(ranking)}" class="text-center py-5">
+                <i class="fas fa-users-slash fa-3x text-white-50 mb-3"></i>
+                <h5 class="text-white-50">Não há atletas com treinos nesta região ainda.</h5>
+                <p class="text-white-50 small">Convide amigos para correrem com você!</p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    function toggleTheme() {
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('strideup-theme', newTheme);
+        updateThemeUI(newTheme);
+    }
+    function updateThemeUI(theme) {
+        const label = document.getElementById('themeLabel');
+        const checkbox = document.getElementById('themeSwitch');
+        if(theme === 'light') {
+            label.innerHTML = '<i class="fas fa-sun me-2" style="color: #f39c12;"></i>Modo Claro';
+            checkbox.checked = false;
+        } else {
+            label.innerHTML = '<i class="fas fa-moon me-2"></i>Modo Escuro';
+            checkbox.checked = true;
+        }
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedTheme = localStorage.getItem('strideup-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeUI(savedTheme);
+    });
+</script>
+</body>
+</html>

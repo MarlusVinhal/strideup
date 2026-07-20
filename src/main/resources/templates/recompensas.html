@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StrideUp - Recompensas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --bg-image: url('/img/fundo-run1.png'); }
+
+        [data-theme="dark"] {
+            --overlay-color: rgba(15, 16, 21, 0.85);
+            --sidebar-bg: rgba(22, 24, 29, 0.6);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --neon-color: #00ffaa;
+            --neon-glow: 0 0 8px rgba(0, 255, 170, 0.4);
+            --text-main: #ffffff;
+            --text-muted: #a0aab5;
+        }
+
+        [data-theme="light"] {
+            --overlay-color: rgba(0, 0, 0, 0.15);
+            --sidebar-bg: rgba(255, 255, 255, 0.15);
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.35);
+            --neon-color: #00ffaa;
+            --neon-glow: 0 0 12px rgba(0, 255, 170, 0.6);
+            --text-main: #ffffff;
+            --text-muted: #e2e8f0;
+        }
+
+        body {
+            background-image: var(--bg-image); background-size: cover; background-position: center;
+            background-attachment: fixed; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden; color: var(--text-main); transition: color 0.3s ease;
+        }
+
+        .wrapper {
+            display: flex; width: 100%; min-height: 100vh;
+            background-color: var(--overlay-color); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            transition: background-color 0.4s ease;
+        }
+
+        .text-neon { color: var(--neon-color) !important; text-shadow: var(--neon-glow); }
+
+        .bg-glass {
+            background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border); transition: background 0.4s ease, border-color 0.4s ease;
+        }
+
+        .sidebar {
+            width: 260px; background: var(--sidebar-bg); border-right: 1px solid var(--glass-border);
+            display: flex; flex-direction: column; backdrop-filter: blur(10px);
+            transition: background 0.4s ease, border-color 0.4s ease;
+        }
+
+        .nav-link-custom { color: var(--text-muted); padding: 12px 20px; margin: 4px 15px; border-radius: 8px; transition: all 0.3s ease; text-decoration: none; display: flex; align-items: center; font-weight: 500; }
+        .nav-link-custom:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.1); }
+        .nav-link-custom.active { color: #000000 !important; background: linear-gradient(90deg, #00ffaa 0%, #00cc88 100%); box-shadow: 0 4px 15px rgba(0, 255, 170, 0.3); }
+
+        .content { flex: 1; padding: 2rem; }
+
+        .reward-card { transition: transform 0.2s ease; border-radius: 1rem; }
+        .reward-card:hover { transform: translateY(-5px); border-color: var(--neon-color); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+
+        .theme-toggle-wrapper { cursor: pointer; border: 1px solid var(--glass-border); transition: all 0.2s ease; }
+        .theme-toggle-wrapper:hover { background: rgba(255, 255, 255, 0.15); border-color: var(--neon-color); }
+
+        [data-theme="light"] .text-white { color: var(--text-main) !important; }
+        [data-theme="light"] .text-white-50 { color: var(--text-muted) !important; }
+        [data-theme="light"] .bg-dark { background-color: rgba(255, 255, 255, 0.6) !important; color: var(--text-main) !important; border-color: var(--glass-border) !important;}
+        [data-theme="light"] .bg-white { background-color: rgba(255, 255, 255, 0.8) !important; }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <nav class="sidebar py-4 shadow-lg">
+        <div class="text-center mb-5 px-3">
+            <h2 class="fw-bold text-neon mb-0"><i class="fas fa-running me-2"></i>StrideUp</h2>
+        </div>
+        <div class="flex-grow-1">
+            <a href="/dashboard" class="nav-link-custom"><i class="fas fa-home me-3 fs-5"></i> Visão Geral</a>
+            <a href="/desafios" class="nav-link-custom"><i class="fas fa-bullseye me-3 fs-5"></i> Desafios</a>
+            <a href="/treinos" class="nav-link-custom"><i class="fas fa-shoe-prints me-3 fs-5"></i> Meus Treinos</a>
+            <a href="/ranking" class="nav-link-custom"><i class="fas fa-trophy me-3 fs-5"></i> Ranking</a>
+            <a href="/recompensas" class="nav-link-custom active"><i class="fas fa-gift me-3 fs-5"></i> Recompensas</a>
+
+            <div th:if="${#authentication.name == 'admin@strideup.com'}" class="mt-4">
+                <p class="text-white-50 small mb-2 px-4 text-uppercase fw-bold" style="letter-spacing: 1px;">Área Admin</p>
+                <a href="/admin/parcerias/nova" class="nav-link-custom" style="color: var(--neon-color);">
+                    <i class="fas fa-handshake me-3 fs-5"></i> Cadastrar Parceria
+                </a>
+                <a href="/admin/recompensas/nova" class="nav-link-custom" style="color: var(--neon-color);">
+                    <i class="fas fa-plus-circle me-3 fs-5"></i> Cadastrar Recompensa
+                </a>
+                <a href="/admin/desafios/novo" class="nav-link-custom" style="color: var(--neon-color);"><i class="fas fa-bullseye me-3 fs-5"></i> Cadastrar Desafio</a>
+            </div>
+        </div>
+        <div class="mt-auto px-3">
+            <div class="theme-toggle-wrapper d-flex align-items-center justify-content-between p-2 rounded-3 mb-3 bg-glass" onclick="toggleTheme()">
+                <span class="text-white small fw-bold" id="themeLabel"><i class="fas fa-moon me-2"></i>Modo Escuro</span>
+                <div class="form-check form-switch m-0">
+                    <input class="form-check-input shadow-none" type="checkbox" id="themeSwitch" checked style="cursor: pointer;">
+                </div>
+            </div>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="btn btn-outline-danger w-100" style="border-radius: 8px;"><i class="fas fa-sign-out-alt me-2"></i> Sair da Conta</button>
+            </form>
+        </div>
+    </nav>
+
+    <main class="content">
+
+        <div th:if="${param.sucesso_resgate}" class="alert alert-success fw-bold border-0 shadow-sm mb-4 bg-glass" style="color: var(--neon-color);">
+            <div class="d-flex align-items-center mb-2">
+                <i class="fas fa-check-circle fs-4 me-2"></i>
+                <span class="fs-5">Parabéns! Você resgatou: <span class="text-white text-uppercase" th:text="${param.premio}">Prêmio</span></span>
+            </div>
+            <div class="p-3 mt-2 rounded border border-secondary bg-dark shadow-sm">
+                <span class="text-white-50 small text-uppercase">O seu Código de Resgate:</span><br>
+                <span class="fs-3 fw-bold text-warning" th:text="${param.cupom}" style="letter-spacing: 3px;">CODIGO</span>
+            </div>
+            <p class="mb-0 mt-2 small text-white-50"><i class="fas fa-envelope me-1"></i> Enviámos uma cópia deste código para o seu e-mail cadastrado.</p>
+        </div>
+
+        <div th:if="${param.erro_resgate}" class="alert alert-danger fw-bold border-0 shadow-sm mb-4 bg-glass text-danger">
+            <i class="fas fa-times-circle me-2"></i> Saldo insuficiente para resgatar esta recompensa.
+        </div>
+
+        <div class="d-flex justify-content-between align-items-end mb-5">
+            <div>
+                <h2 class="fw-bold text-white mb-0">Loja de <span class="text-neon">Recompensas</span></h2>
+                <p class="text-white-50 mb-1">Troque os seus pontos por benefícios exclusivos.</p>
+            </div>
+            <div class="bg-glass px-4 py-2 text-center shadow" style="border-radius: 12px;">
+                <p class="text-white-50 small text-uppercase fw-bold mb-1" style="letter-spacing: 1px;">Saldo Total</p>
+                <h4 class="fw-bold text-warning mb-0 d-flex align-items-center justify-content-center gap-2">
+                    <i class="fas fa-coins text-warning" style="filter: drop-shadow(0 0 5px rgba(255,193,7,0.5));"></i>
+                    <span th:text="${stridePointsTotais != null ? stridePointsTotais : 0} + ' SP'">0 SP</span>
+                </h4>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(recompensas)}" class="card bg-glass text-center p-5 mx-auto mt-5 shadow-lg" style="max-width: 600px; border-radius: 1.5rem;">
+            <i class="fas fa-box-open fa-4x mb-4 text-white-50"></i>
+            <h3 class="fw-bold text-white">Nenhuma recompensa disponível</h3>
+            <p class="text-white-50 mb-0">Novos prêmios e parceiros chegarão em breve à loja do StrideUp!</p>
+        </div>
+
+        <div th:if="${not #lists.isEmpty(recompensas)}" class="row g-4">
+            <div th:each="recompensa : ${recompensas}" class="col-md-6 col-xl-4">
+                <div class="card bg-glass reward-card h-100 p-3 shadow-lg">
+
+                    <div class="text-center bg-white rounded-3 p-3 mb-3 shadow-sm" style="height: 120px; display: flex; align-items: center; justify-content: center;" th:if="${recompensa.parceria != null and recompensa.parceria.logotipoUrl != null and !recompensa.parceria.logotipoUrl.isEmpty()}">
+                        <img th:src="${recompensa.parceria.logotipoUrl}" alt="Logo Parceiro" style="max-height: 100px; max-width: 100%; object-fit: contain;">
+                    </div>
+                    <div class="text-center bg-dark rounded-3 p-3 mb-3 border border-secondary shadow-sm" style="height: 120px; display: flex; align-items: center; justify-content: center;" th:unless="${recompensa.parceria != null and recompensa.parceria.logotipoUrl != null and !recompensa.parceria.logotipoUrl.isEmpty()}">
+                        <i class="fas fa-gift fa-3x text-neon"></i>
+                    </div>
+
+                    <div class="card-body p-0 d-flex flex-column">
+                        <span class="badge bg-secondary mb-2 align-self-start" th:if="${recompensa.parceria != null}" th:text="${recompensa.parceria.nomeEmpresa}">Marca</span>
+                        <h5 class="fw-bold text-white mb-2" th:text="${recompensa.nome}">Nome do Prêmio</h5>
+                        <p class="text-white-50 small mb-4 flex-grow-1" th:text="${recompensa.descricao}">Descrição...</p>
+
+                        <div class="d-flex justify-content-between align-items-center mt-auto pt-3 border-top border-secondary">
+                            <span class="fw-bold text-warning fs-5">
+                                <i class="fas fa-coins me-1"></i><span th:text="${recompensa.custoPontos}">0</span> SP
+                            </span>
+
+                            <form th:action="@{/recompensas/resgatar}" method="post" class="m-0">
+                                <input type="hidden" name="recompensaId" th:value="${recompensa.id}">
+                                <button type="submit" class="btn btn-sm text-dark fw-bold px-3" style="background-color: #00ffaa; border-radius: 8px; transition: all 0.3s ease;">
+                                    Resgatar
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    function toggleTheme() {
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('strideup-theme', newTheme);
+        updateThemeUI(newTheme);
+    }
+    function updateThemeUI(theme) {
+        const label = document.getElementById('themeLabel');
+        const checkbox = document.getElementById('themeSwitch');
+        if(theme === 'light') {
+            label.innerHTML = '<i class="fas fa-sun me-2" style="color: #f39c12;"></i>Modo Claro';
+            checkbox.checked = false;
+        } else {
+            label.innerHTML = '<i class="fas fa-moon me-2"></i>Modo Escuro';
+            checkbox.checked = true;
+        }
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedTheme = localStorage.getItem('strideup-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeUI(savedTheme);
+    });
+</script>
+</body>
+</html>

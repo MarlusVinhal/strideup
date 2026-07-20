@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StrideUp - Meus Treinos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        :root { --bg-image: url('/img/fundo-run.jpg'); }
+
+        [data-theme="dark"] {
+            --overlay-color: rgba(15, 16, 21, 0.85);
+            --sidebar-bg: rgba(22, 24, 29, 0.6);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --neon-color: #00ffaa;
+            --neon-glow: 0 0 8px rgba(0, 255, 170, 0.4);
+            --text-main: #ffffff;
+            --text-muted: #a0aab5;
+        }
+
+        [data-theme="light"] {
+            --overlay-color: rgba(0, 0, 0, 0.15);
+            --sidebar-bg: rgba(255, 255, 255, 0.15);
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.35);
+            --neon-color: #00ffaa;
+            --neon-glow: 0 0 12px rgba(0, 255, 170, 0.6);
+            --text-main: #ffffff;
+            --text-muted: #e2e8f0;
+        }
+
+        body {
+            background-image: var(--bg-image); background-size: cover; background-position: center;
+            background-attachment: fixed; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden; color: var(--text-main); transition: color 0.3s ease;
+        }
+
+        .wrapper {
+            display: flex; width: 100%; min-height: 100vh;
+            background-color: var(--overlay-color); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            transition: background-color 0.4s ease;
+        }
+
+        .text-neon { color: var(--neon-color) !important; text-shadow: var(--neon-glow); }
+
+        .bg-glass {
+            background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border); transition: background 0.4s ease, border-color 0.4s ease;
+        }
+
+        .sidebar {
+            width: 260px; background: var(--sidebar-bg); border-right: 1px solid var(--glass-border);
+            display: flex; flex-direction: column; backdrop-filter: blur(10px);
+            transition: background 0.4s ease, border-color 0.4s ease;
+        }
+
+        .nav-link-custom { color: var(--text-muted); padding: 12px 20px; margin: 4px 15px; border-radius: 8px; transition: all 0.3s ease; text-decoration: none; display: flex; align-items: center; font-weight: 500; }
+        .nav-link-custom:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.1); }
+        .nav-link-custom.active { color: #000000 !important; background: linear-gradient(90deg, #00ffaa 0%, #00cc88 100%); box-shadow: 0 4px 15px rgba(0, 255, 170, 0.3); }
+
+        .content { flex: 1; padding: 2rem; }
+
+        .training-row { background: var(--glass-bg); transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.4s ease, border-color 0.4s ease; border-radius: 12px; cursor: pointer; border: 1px solid var(--glass-border); }
+        .training-row:hover { transform: translateY(-3px); background: rgba(255, 255, 255, 0.1); border-color: var(--neon-color); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+
+        .expanded-content { border-top: 1px solid var(--glass-border); padding-top: 1.5rem; margin-top: 1rem; }
+        .map-container { height: 250px; width: 100%; border-radius: 1rem; z-index: 1; }
+        .neon-marker { background-color: #00ffaa; width: 15px; height: 15px; border-radius: 50%; box-shadow: 0 0 15px #00ffaa, 0 0 30px #00ffaa; border: 2px solid #ffffff; }
+
+        .share-btn { transition: all 0.2s ease; border-width: 2px; }
+        .share-btn:hover { transform: scale(1.15); box-shadow: 0 0 15px currentColor; }
+        .expand-icon { transition: transform 0.3s ease; }
+        [aria-expanded="true"] .expand-icon { transform: rotate(180deg); color: var(--neon-color) !important; }
+
+        .theme-toggle-wrapper { cursor: pointer; border: 1px solid var(--glass-border); transition: all 0.2s ease; }
+        .theme-toggle-wrapper:hover { background: rgba(255, 255, 255, 0.15); border-color: var(--neon-color); }
+
+        [data-theme="light"] .text-white { color: var(--text-main) !important; }
+        [data-theme="light"] .text-white-50 { color: var(--text-muted) !important; }
+        [data-theme="light"] .bg-dark { background-color: rgba(255, 255, 255, 0.6) !important; color: var(--text-main) !important; border-color: var(--glass-border) !important;}
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <!-- MENU LATERAL -->
+    <nav class="sidebar py-4 shadow-lg">
+        <div class="text-center mb-5 px-3">
+            <h2 class="fw-bold text-neon mb-0"><i class="fas fa-running me-2"></i>StrideUp</h2>
+        </div>
+        <div class="flex-grow-1">
+            <a href="/dashboard" class="nav-link-custom"><i class="fas fa-home me-3 fs-5"></i> Visão Geral</a>
+            <a href="/desafios" class="nav-link-custom"><i class="fas fa-bullseye me-3 fs-5"></i> Desafios</a>
+            <a href="/treinos" class="nav-link-custom active"><i class="fas fa-shoe-prints me-3 fs-5"></i> Meus Treinos</a>
+            <a href="/ranking" class="nav-link-custom"><i class="fas fa-trophy me-3 fs-5"></i> Ranking</a>
+            <a href="/recompensas" class="nav-link-custom"><i class="fas fa-gift me-3 fs-5"></i> Recompensas</a>
+            <div th:if="${#authentication.name == 'admin@strideup.com'}" class="mt-4">
+                <p class="text-white-50 small mb-2 px-4 text-uppercase fw-bold" style="letter-spacing: 1px;">Área Admin</p>
+                <a href="/admin/parcerias/nova" class="nav-link-custom" style="color: var(--neon-color);"><i class="fas fa-handshake me-3 fs-5"></i> Cadastrar Parceria</a>
+                <a href="/admin/recompensas/nova" class="nav-link-custom" style="color: var(--neon-color);"><i class="fas fa-plus-circle me-3 fs-5"></i> Cadastrar Recompensa</a>
+                <a href="/admin/desafios/novo" class="nav-link-custom" style="color: var(--neon-color);"><i class="fas fa-bullseye me-3 fs-5"></i> Cadastrar Desafio</a>
+            </div>
+        </div>
+        <div class="mt-auto px-3">
+            <div class="theme-toggle-wrapper d-flex align-items-center justify-content-center p-2 rounded-3 mb-3 bg-glass" onclick="toggleTheme()" title="Mudar Tema">
+                <span class="text-white fs-4" id="themeIconBtn"><i class="fas fa-moon"></i></span>
+            </div>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="btn btn-outline-danger w-100" style="border-radius: 8px;"><i class="fas fa-sign-out-alt me-2"></i> Sair da Conta</button>
+            </form>
+        </div>
+    </nav>
+
+    <main class="content">
+        <div class="d-flex justify-content-between align-items-end mb-5">
+            <div>
+                <p class="text-white-50 mb-1">Análise e Histórico</p>
+                <h2 class="fw-bold text-white mb-0">Meus <span class="text-neon">Treinos</span></h2>
+            </div>
+            <div class="text-end bg-glass px-4 py-2 shadow" style="border-radius: 12px;">
+                <p class="text-white-50 small text-uppercase fw-bold mb-1">Saldo Total</p>
+                <h3 class="fw-bold text-warning mb-0"><i class="fas fa-coins text-warning"></i> <span th:text="${stridePointsTotais} + ' SP'">0 SP</span></h3>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(corridas)}" class="card bg-glass text-center p-5 mx-auto mt-5 shadow-lg" style="max-width: 600px; border-radius: 1.5rem;">
+            <i class="fab fa-strava fa-3x mb-3 text-white-50"></i>
+            <h4 class="fw-bold text-white">Nenhum treino disponível</h4>
+            <p class="text-white-50">Insira um treino pelo Dashboard ou conecte a sua conta Strava.</p>
+            <a th:unless="${stravaConectado}" href="/strava/conectar" class="btn text-white fw-bold mx-auto px-4 mt-3" style="background-color: #fc4c02; border-radius: 8px;">Conectar Strava</a>
+        </div>
+
+        <div th:if="${not #lists.isEmpty(corridas)}" class="bg-glass p-4 shadow-lg" style="border-radius: 1.5rem;">
+
+            <div class="d-none d-md-flex text-white-50 small text-uppercase fw-bold mb-3 px-3" style="letter-spacing: 1px;">
+                <div style="width: 50%;">Atividade</div>
+                <div style="width: 20%; text-align: center;">Duração</div>
+                <div style="width: 20%; text-align: right;">Distância</div>
+                <div style="width: 10%; text-align: center;">Detalhes</div>
+            </div>
+
+            <div th:each="corrida, stat : ${corridas}" class="training-row p-3 mb-3 shadow-sm">
+
+                <div class="d-flex justify-content-between align-items-center" data-bs-toggle="collapse" th:data-bs-target="'#details-' + ${stat.index}" aria-expanded="false" style="outline: none;">
+                    <div class="d-flex align-items-center" style="width: 50%; min-width: 200px;">
+                        <div class="bg-dark rounded-circle d-flex align-items-center justify-content-center border border-secondary me-3 shadow-sm flex-shrink-0" style="width: 45px; height: 45px;">
+                            <i th:if="${corrida.tipo == 'STRAVA'}" class="fab fa-strava" style="color: #fc4c02; font-size: 1.5rem;"></i>
+                            <i th:if="${corrida.tipo == 'MANUAL'}" class="fas fa-running" style="color: #00ffaa; font-size: 1.5rem;"></i>
+                        </div>
+                        <div class="overflow-hidden">
+                            <span class="fw-bold fs-5 text-white d-block text-truncate" th:text="${corrida.nome}">Treino</span>
+                            <span th:if="${corrida.tipo == 'STRAVA'}" class="badge mt-1" style="background-color: #fc4c02; font-size: 0.65rem; letter-spacing: 1px;">STRAVA</span>
+                            <span th:if="${corrida.tipo == 'MANUAL'}" class="badge mt-1 text-dark" style="background-color: #00ffaa; font-size: 0.65rem; letter-spacing: 1px; font-weight: bold;">STRIDEUP</span>
+                        </div>
+                    </div>
+                    <div class="d-none d-md-block text-center" style="width: 20%;">
+                        <span class="text-white-50 fs-5"><span class="text-white fw-bold" th:text="${corrida.tempo}">0</span> min</span>
+                    </div>
+                    <div class="text-end" style="width: 20%;">
+                        <span class="fw-bold text-neon fs-5"><span th:text="${#numbers.formatDecimal(corrida.distancia, 1, 2)}">0</span> km</span>
+                    </div>
+                    <div class="text-center" style="width: 10%;">
+                        <i class="fas fa-chevron-down text-white-50 fs-4 expand-icon"></i>
+                    </div>
+                </div>
+
+                <div th:id="'details-' + ${stat.index}" class="collapse">
+                    <div class="expanded-content">
+                        <div class="row g-4 align-items-center">
+                            <div class="col-lg-7">
+                                <div th:id="'map-' + ${stat.index}" class="map-container shadow border border-secondary" th:data-polyline="${corrida.polyline}" th:data-lat="${corrida.latitude}" th:data-lng="${corrida.longitude}"></div>
+                            </div>
+                            <div class="col-lg-5">
+
+                                <!-- NOVA CAIXA DE DIÁRIO DE TREINO (Protegida contra Nulls) -->
+                                <div class="text-start bg-dark rounded-3 p-3 mb-3 border border-secondary shadow-sm">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="text-white-50 small"><i class="fas fa-tag me-1"></i> Desporto:</span>
+                                        <span class="text-white small fw-bold text-uppercase" th:text="${corrida.desporto}">Corrida</span>
+                                    </div>
+                                    <div th:if="${not #strings.isEmpty(corrida.descricao)}" class="mt-2 pt-2 border-top border-secondary">
+                                        <span class="text-white-50 small d-block mb-1"><i class="fas fa-book-open me-1"></i> Diário:</span>
+                                        <span class="text-white small fst-italic" th:text="${corrida.descricao}"></span>
+                                    </div>
+                                </div>
+
+                                <!-- NOVA ANÁLISE DE ESFORÇO E RITMO -->
+                                <div class="row text-center bg-dark rounded-3 p-3 mb-4 border border-secondary mx-0 shadow-sm transition-all" style="transition: transform 0.2s;">
+                                    <div class="col-6 border-end border-secondary">
+                                        <p class="text-white-50 small text-uppercase mb-1 fw-bold">
+                                            <i class="fas fa-fire text-danger me-1"></i> Calorias Est.
+                                        </p>
+                                        <h4 class="fw-bold text-white mb-0"><span th:text="${corrida.calorias}">0</span> <span class="fs-6 text-white-50">kcal</span></h4>
+                                    </div>
+                                    <div class="col-6">
+                                        <p class="text-white-50 small text-uppercase mb-1 fw-bold">
+                                            <i class="fas fa-tachometer-alt text-info me-1"></i> Ritmo Médio
+                                        </p>
+                                        <h4 class="fw-bold text-white mb-0"><span th:text="${corrida.pace}">0'00"</span> <span class="fs-6 text-white-50">/km</span></h4>
+                                    </div>
+                                </div>
+
+                                <div class="text-center p-4 rounded-4 shadow-sm" style="background: rgba(0, 255, 170, 0.05); border: 1px dashed rgba(0, 255, 170, 0.4);">
+                                    <h6 class="text-white mb-2 fw-bold"><i class="fas fa-share-alt text-neon me-2"></i>Espalhe a sua conquista!</h6>
+                                    <p class="small text-white-50 mb-4">Inspire outras pessoas mostrando os seus <span th:text="${#numbers.formatDecimal(corrida.distancia, 1, 2)}"></span> km percorridos.</p>
+                                    <div class="d-flex justify-content-center gap-3">
+                                        <a th:href="'https://api.whatsapp.com/send?text=Acabei de correr ' + ${#numbers.formatDecimal(corrida.distancia, 1, 2)} + ' km no StrideUp! 🏃💨 Vem correr comigo e ganhar prêmios!'" target="_blank" class="btn btn-outline-success share-btn rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;" title="Compartilhar no WhatsApp">
+                                            <i class="fab fa-whatsapp fs-4"></i>
+                                        </a>
+                                        <a th:href="'https://twitter.com/intent/tweet?text=Acabei de correr ' + ${#numbers.formatDecimal(corrida.distancia, 1, 2)} + ' km no StrideUp! 🏃💨 Superando limites todos os dias! %23StrideUp %23Corrida'" target="_blank" class="btn btn-outline-info share-btn rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;" title="Compartilhar no X (Twitter)">
+                                            <i class="fab fa-twitter fs-4"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    function toggleTheme() {
+        const html = document.documentElement;
+        const newTheme = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('strideup-theme', newTheme);
+        document.getElementById('themeIconBtn').innerHTML = newTheme === 'light' ? '<i class="fas fa-sun" style="color: #f39c12;"></i>' : '<i class="fas fa-moon"></i>';
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedTheme = localStorage.getItem('strideup-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.getElementById('themeIconBtn').innerHTML = savedTheme === 'light' ? '<i class="fas fa-sun" style="color: #f39c12;"></i>' : '<i class="fas fa-moon"></i>';
+    });
+
+    // MAPAS
+    function decodePolyline(encoded) {
+        if (!encoded) return [];
+        var poly = [], index = 0, len = encoded.length, lat = 0, lng = 0;
+        while (index < len) {
+            var b, shift = 0, result = 0;
+            do { b = encoded.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+            var dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1)); lat += dlat; shift = 0; result = 0;
+            do { b = encoded.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+            var dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1)); lng += dlng; poly.push([lat / 1e5, lng / 1e5]);
+        }
+        return poly;
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        var maps = document.querySelectorAll('.map-container');
+        var leafletMapInstances = {};
+
+        maps.forEach(function(mapDiv) {
+            var map = L.map(mapDiv.id, { zoomControl: false, dragging: false, scrollWheelZoom: false });
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OSM' }).addTo(map);
+            leafletMapInstances[mapDiv.id] = map;
+
+            var polylineStr = mapDiv.getAttribute('data-polyline');
+            var latStr = mapDiv.getAttribute('data-lat');
+            var lngStr = mapDiv.getAttribute('data-lng');
+
+            if (polylineStr && polylineStr !== 'null') {
+                var coordinates = decodePolyline(polylineStr);
+                var polyline = L.polyline(coordinates, { color: '#00ffaa', weight: 4, opacity: 0.8 }).addTo(map);
+                map.fitBounds(polyline.getBounds(), {padding: [20, 20]});
+            } else if (latStr && lngStr && latStr !== 'null' && lngStr !== 'null') {
+                var markerLat = parseFloat(latStr); var markerLng = parseFloat(lngStr);
+                var neonIcon = L.divIcon({ className: 'custom-div-icon', html: "<div class='neon-marker'></div>", iconSize: [15, 15], iconAnchor: [7, 7] });
+                L.marker([markerLat, markerLng], {icon: neonIcon}).addTo(map);
+                map.setView([markerLat, markerLng], 14);
+            } else { map.setView([-18.9113, -48.2622], 12); }
+        });
+
+        var collapsibles = document.querySelectorAll('.collapse');
+        collapsibles.forEach(function(coll) {
+            coll.addEventListener('shown.bs.collapse', function () {
+                var mapDiv = coll.querySelector('.map-container');
+                if (mapDiv && leafletMapInstances[mapDiv.id]) { leafletMapInstances[mapDiv.id].invalidateSize(); }
+            });
+        });
+    });
+</script>
+</body>
+</html>
