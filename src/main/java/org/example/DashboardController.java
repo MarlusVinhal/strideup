@@ -54,10 +54,10 @@ public class DashboardController {
         return (int) (distanciaKm * 65);
     }
 
-    private String calcularPatente(int pontos) {
-        if (pontos < 500) return "Iniciante";
-        if (pontos < 1500) return "Amador";
-        return "Elite";
+    private String calcularPatente(double distanciaTotal) {
+        if (distanciaTotal < 50.0) return "Iniciante"; // Exemplo: Menos de 50km
+        if (distanciaTotal < 200.0) return "Amador";   // Exemplo: Entre 50km e 200km
+        return "Elite";                                // Exemplo: Mais de 200km
     }
 
     private List<Map<String, Object>> gerarFeedUnificado(Usuario usuario, boolean stravaConectado) throws RuntimeException {
@@ -229,7 +229,7 @@ public class DashboardController {
         // Variáveis padrão da View
         model.addAttribute("nomeUsuario", usuario.getNome());
         model.addAttribute("stridePointsTotais", usuario.getStridePoints());
-        model.addAttribute("patenteAtleta", calcularPatente(usuario.getStridePoints()));
+        model.addAttribute("patenteAtleta", calcularPatente(usuario.getDistanciaTotal()));
         model.addAttribute("stravaConectado", stravaConectado);
         model.addAttribute("distanciaTotal", distanciaTotalAtleta);
         model.addAttribute("tempoTotal", tempoTotalAtleta);
@@ -259,7 +259,7 @@ public class DashboardController {
         }
 
         model.addAttribute("stridePointsTotais", usuario.getStridePoints());
-        model.addAttribute("patenteAtleta", calcularPatente(usuario.getStridePoints()));
+        model.addAttribute("patenteAtleta", calcularPatente(usuario.getDistanciaTotal()));
         model.addAttribute("stravaConectado", stravaConectado);
 
         return "treinos";
@@ -306,7 +306,7 @@ public class DashboardController {
 
         model.addAttribute("desafios", desafiosView);
         model.addAttribute("stridePointsTotais", usuario.getStridePoints());
-        model.addAttribute("patenteAtleta", calcularPatente(usuario.getStridePoints()));
+        model.addAttribute("patenteAtleta", calcularPatente(usuario.getDistanciaTotal()));
 
         return "desafios";
     }
@@ -407,7 +407,7 @@ public class DashboardController {
 
         int pontos = usuarioLogado.getStridePoints();
         model.addAttribute("stridePointsTotais", pontos);
-        model.addAttribute("patenteAtleta", calcularPatente(pontos));
+        model.addAttribute("patenteAtleta", calcularPatente(usuarioLogado.getDistanciaTotal()));
 
         return "ranking";
     }
@@ -419,7 +419,8 @@ public class DashboardController {
         int pontos = (usuario != null) ? usuario.getStridePoints() : 0;
         model.addAttribute("recompensas", recompensaRepository.findAll());
         model.addAttribute("stridePointsTotais", pontos);
-        model.addAttribute("patenteAtleta", calcularPatente(pontos));
+        double distanciaAtleta = (usuario != null && usuario.getDistanciaTotal() != null) ? usuario.getDistanciaTotal() : 0.0;
+        model.addAttribute("patenteAtleta", calcularPatente(distanciaAtleta));
         return "recompensas";
     }
 

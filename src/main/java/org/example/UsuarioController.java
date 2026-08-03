@@ -20,7 +20,12 @@ public class UsuarioController {
     public String exibirTelaCadastro() {
         return "cadastro";
     }
-
+    @GetMapping("/")
+    
+    public String redirecionarRaiz() {
+        // Redireciona quem acessar o domínio principal direto para a tela de login
+        return "redirect:/login";
+    }
     @PostMapping("/cadastrar")
     public String salvarUsuario(@ModelAttribute Usuario usuario) {
 
